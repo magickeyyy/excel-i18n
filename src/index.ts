@@ -2,7 +2,6 @@ import "colors";
 import path from "path";
 import fs from "fs";
 import { readFile } from "xlsx";
-import type { CellObject } from "xlsx";
 
 const pwd = process.cwd();
 const Letters = String.fromCharCode(
@@ -24,80 +23,162 @@ function getCellName(count: number) {
     return arr.map((v) => Letters[v]).join("");
 }
 /*
-目前发现wps开过的文档会增加默认一个隐藏页：WpsReserved_CellImgList,所以取sheet还是以sheet名为准
-取值第一行是表头信息（region[0]），第一列是key信息
-坐标位置都是从1开始
+目前发现wps开过的文档会增加默认一个隐藏页：WpsReserved_CellImgList,所以取sheet还是以sheetName名为准
+坐标位置都是从1开始，[列数,行数]
+多语言存放区域（SCOPE），起点列数应该和标题栏起点列数相等，终点列数应该和标题栏终点列数相等；起点行数应该和KEY起点行数相等，终点行数应该和KEY列终点行数相等
 */
 function fn({
-    filePath,
+    inputPath,
+    outputDir,
+    extension,
     sheetName,
-    region,
-    colmuns,
-    sheetIndex = 1,
-    keyIndex = 1,
-    titleIndex = 1,
-    formateLang,
+    sheetIndex = 0,
+    TITLE,
+    KEY,
+    SCOPE,
 }: {
-    filePath: string;
+    inputPath: string; // 文件在process.pwd()下的路径
+    outputDir: string; // 输出文件夹
+    extension: ".json" | ".ts" | ".js"; // 输出文件后缀名
     sheetIndex?: number;
     sheetName?: string;
-    region: [number, number, number, number]; // 左上角行数，左上角列数，右上角列数，右下角行数，从1开始
-    colmuns: [number, number]; // 取多语言的开始列数和结束列数,从1开始，连续
-    keyIndex?: number; // 从region[1]开始，第n列是key列，从1开始
-    titleIndex?: number; // 从region[0]开始第n行是标题栏，从1开始
-    formateLang: (title: string) => string;
+    // 标题栏，一般包含多语言信息，最终会以语言名做文件名
+    TITLE: {
+        start: [number, number];
+        end: [number, number];
+        handle: (name: string, content?: string) => string | void;
+    };
+    // KEY列，不包含KEY表头
+    KEY: {
+        start: [number, number];
+        end: [number, number];
+        handle?: (name: string, content?: string) => string | void;
+    };
+    // 多语言在表格中应该是一个矩形，不能隔断
+    SCOPE: {
+        leftTop: [number, number];
+        rightBottom: [number, number];
+        handle?: (name: string, content?: string) => string | void;
+    };
 }) {
-    const workbook = readFile(filePath);
+    const workbook = readFile(path.resolve(pwd, inputPath));
     const targetSheetName = sheetName || workbook.SheetNames[sheetIndex];
-    const [lx, ly, rx, ry] = region;
     const curSheet = workbook.Sheets[targetSheetName];
-    let cy = ly + 1;
+    const { start: keyStart, end: keyEnd, handle: keyHandle } = KEY;
+    const { start: titleStart, end: titleEnd, handle: titleHandle } = TITLE;
+    const { leftTop, rightBottom, handle: contentHandle } = SCOPE;
+    if (
+        keyStart[0] < 1 ||
+        keyEnd[0] < 1 ||
+        keyStart[1] < 2 ||
+        keyEnd[1] < 2 ||
+        keyStart[0] !== keyEnd[0] ||
+        keyStart[1] >= keyEnd[1]
+    ) {
+        console.log("KEY参数错误".red);
+        process.exit();
+    }
+    if (
+        titleStart[0] < 1 ||
+        titleEnd[0] < 1 ||
+        titleStart[1] < 1 ||
+        titleEnd[1] < 1 ||
+        titleStart[1] !== titleEnd[1] ||
+        titleStart[0] >= titleEnd[0]
+    ) {
+        console.log("TITLE参数错误".red);
+        process.exit();
+    }
+    if (
+        leftTop[0] !== titleStart[0] ||
+        leftTop[1] !== keyStart[1] ||
+        rightBottom[0] !== titleEnd[0] ||
+        rightBottom[1] !== keyEnd[1]
+    ) {
+        console.log("SCOPE参数错误".red);
+        process.exit();
+    }
+    // 处理KEY列
     const keys: string[] = [];
-    while (cy <= ry) {
-        const keyx = cy + keyIndex - 1;
-        const curKey = curSheet[Letters[lx - 1] + keyx]?.v?.trim?.();
+    const keyLetter = Letters[keyStart[0] - 1];
+    let keyY = keyStart[1];
+    while (keyY <= keyEnd[1]) {
+        const curKey =
+            keyHandle?.(keyLetter + keyY, curSheet[keyLetter + keyY]?.v) ||
+            curSheet[keyLetter + keyY]?.v?.trim?.();
         if (curKey && !keys.includes(curKey)) {
             keys.push(curKey);
         } else {
-            console.log(curSheet[Letters[lx - 1] + keyx], "不存在".red);
+            console.log(curKey, "KEY错误或者重复".red);
             process.exit();
         }
-        ++cy;
+        ++keyY;
     }
-    console.log("keys", keys);
-    const [ls, le] = colmuns;
     const langs: string[] = [];
-    let clx = region[1] + titleIndex - 1;
-    let langStart = ls;
-    while (langStart <= le) {
-        const title = curSheet[Letters[langStart - 1] + clx]?.v?.trim();
-        const lang = title ? formateLang(title) : "";
-        if (title && lang && !langs.includes(lang)) {
+    let langX = titleStart[0];
+    while (langX <= titleEnd[0]) {
+        const lang = titleHandle(
+            getCellName(langX) + titleStart[1],
+            curSheet[getCellName(langX) + titleStart[1]]?.v
+        );
+        if (lang && !langs.includes(lang)) {
             langs.push(lang);
+            ++langX;
         } else {
-            console.log("语言项提取结果错误".red, lang);
+            console.log("从标题栏提取语言错误或者语言重复".red, lang);
+            process.exit();
         }
-        ++langStart;
     }
-    const data: Record<string, Record<string, string>> = {};
-    for (let i = ls; i <= le; i++) {
-        const lang = langs[i - ls];
-        if (!(lang in data)) {
-            data[lang] = {};
-            for (let j = lx + 1; j <= ry; j++) {
-                data[lang][keys[j - lx - 1]] =
-                    curSheet[getCellName(i) + j]?.v?.trim() || "取错了";
+    const locale: Record<string, Record<string, string>> = {};
+    for (let i = leftTop[0]; i <= rightBottom[0]; i++) {
+        const lang = langs[i - leftTop[0]];
+        if (!locale.hasOwnProperty(lang)) {
+            locale[lang] = {};
+            for (let j = leftTop[1]; j <= rightBottom[1]; j++) {
+                const content = curSheet[getCellName(i) + j]?.v;
+                if (content == undefined) {
+                    console.log(`${getCellName(i) + j}没内容`.red);
+                }
+                locale[lang][keys[j - leftTop[1]]] =
+                    contentHandle?.(getCellName(i) + j, content) ||
+                    content?.trim();
             }
         }
     }
-    fs.writeFileSync(path.resolve(pwd, "tt.json"), JSON.stringify(data));
+    try {
+        fs.readdirSync(path.resolve(pwd, outputDir));
+    } catch (e) {
+        fs.mkdirSync(path.resolve(pwd, outputDir));
+    }
+    Object.entries(locale).map(([filename, data]) =>
+        fs.writeFileSync(
+            path.resolve(pwd, outputDir, filename + extension),
+            extension === ".json"
+                ? JSON.stringify(data, null, "\t")
+                : "export default " + JSON.stringify(data, null, "\t")
+        )
+    );
+    console.log("输出结果：".green, path.resolve(pwd, outputDir).bgBlue);
     process.exit();
 }
 fn({
-    filePath: path.resolve(pwd, "excel", "Clap house 文本表.xlsx"),
+    inputPath: "excel/Clap house 文本表.xlsx",
+    outputDir: "locale",
+    extension: ".ts",
     sheetIndex: 7,
     sheetName: "PDD活动宝箱文本",
-    region: [1, 4, 8, 14],
-    colmuns: [5, 8],
-    formateLang: (title) => title.split("/")[1],
+    TITLE: {
+        start: [5, 4],
+        end: [8, 4],
+        handle: (_, content) => {
+            if (content?.split("/")[1]) return content?.split("/")[1];
+            console.log(content, "标题不合规范".red);
+            process.exit();
+        },
+    },
+    KEY: { start: [1, 5], end: [1, 14] },
+    SCOPE: {
+        leftTop: [5, 5],
+        rightBottom: [8, 14],
+    },
 });
