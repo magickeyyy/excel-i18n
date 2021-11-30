@@ -4,149 +4,102 @@ import fs from "fs";
 import { readFile } from "xlsx";
 
 const pwd = process.cwd();
-const Letters = String.fromCharCode(
-    ...Array.from({ length: 26 }).map((_, i) => 65 + i)
-).split("");
-function getCellName(count: number) {
-    if (count <= 26) {
-        return Letters[count - 1];
-    }
-    let arr: number[] = [];
-    while (count > 26) {
-        let data = Math.floor(count / 26);
-        arr.unshift(count - data * 26);
-        count = data;
-        if (count < 26) {
-            arr.unshift(count - 1);
-        }
-    }
-    return arr.map((v) => Letters[v]).join("");
-}
 /*
 目前发现wps开过的文档会增加默认一个隐藏页：WpsReserved_CellImgList,所以取sheet还是以sheetName名为准
 坐标位置都是从1开始，[列数,行数]
 多语言存放区域（SCOPE），起点列数应该和标题栏起点列数相等，终点列数应该和标题栏终点列数相等；起点行数应该和KEY起点行数相等，终点行数应该和KEY列终点行数相等
 */
-function fn({
+function pickSheet({
     inputPath,
     outputDir,
     extension,
     sheetName,
     sheetIndex = 0,
-    TITLE,
-    KEY,
-    SCOPE,
+    keyX,
+    keyY1,
+    keyY2,
+    titleX,
+    titleY,
+    handleTitle,
+    handleContent,
+    handleKey,
 }: {
     inputPath: string; // 文件在process.pwd()下的路径
     outputDir: string; // 输出文件夹
     extension: ".json" | ".ts" | ".js"; // 输出文件后缀名
     sheetIndex?: number;
     sheetName?: string;
-    // 标题栏，一般包含多语言信息，最终会以语言名做文件名
-    TITLE: {
-        start: [number, number];
-        end: [number, number];
-        handle: (name: string, content?: string) => string | void;
-    };
-    // KEY列，不包含KEY表头
-    KEY: {
-        start: [number, number];
-        end: [number, number];
-        handle?: (name: string, content?: string) => string | void;
-    };
-    // 多语言在表格中应该是一个矩形，不能隔断
-    SCOPE: {
-        leftTop: [number, number];
-        rightBottom: [number, number];
-        handle?: (name: string, content?: string) => string | void;
-    };
+    keyX: string; // KEY列序号
+    keyY1: number; // KEY起点行号
+    keyY2: number; // KEY终点行号
+    titleX: string[]; // title每列序号
+    titleY: number; // title在哪一行
+    handleKey?: (name: string, content?: string) => string | void;
+    handleTitle: (name: string, content?: string) => string | void;
+    handleContent?: (name: string, content?: string) => string | void;
 }) {
     const workbook = readFile(path.resolve(pwd, inputPath));
     const targetSheetName = sheetName || workbook.SheetNames[sheetIndex];
     const curSheet = workbook.Sheets[targetSheetName];
-    const { start: keyStart, end: keyEnd, handle: keyHandle } = KEY;
-    const { start: titleStart, end: titleEnd, handle: titleHandle } = TITLE;
-    const { leftTop, rightBottom, handle: contentHandle } = SCOPE;
     if (
-        keyStart[0] < 1 ||
-        keyEnd[0] < 1 ||
-        keyStart[1] < 2 ||
-        keyEnd[1] < 2 ||
-        keyStart[0] !== keyEnd[0] ||
-        keyStart[1] >= keyEnd[1]
+        !titleX.length ||
+        titleX.concat(keyX).find((v) => !/^[A-Z]+$/g.test(v))
     ) {
-        console.log("KEY参数错误".red);
+        console.log("keyX和titleX每项都应该是大写字母".red);
         process.exit();
     }
-    if (
-        titleStart[0] < 1 ||
-        titleEnd[0] < 1 ||
-        titleStart[1] < 1 ||
-        titleEnd[1] < 1 ||
-        titleStart[1] !== titleEnd[1] ||
-        titleStart[0] >= titleEnd[0]
-    ) {
-        console.log("TITLE参数错误".red);
-        process.exit();
-    }
-    if (
-        leftTop[0] !== titleStart[0] ||
-        leftTop[1] !== keyStart[1] ||
-        rightBottom[0] !== titleEnd[0] ||
-        rightBottom[1] !== keyEnd[1]
-    ) {
-        console.log("SCOPE参数错误".red);
+    if (keyY1 > keyY2) {
+        console.log("keyY2应该大于keyY1".red);
         process.exit();
     }
     // 处理KEY列
     const keys: string[] = [];
-    const keyLetter = Letters[keyStart[0] - 1];
-    let keyY = keyStart[1];
-    while (keyY <= keyEnd[1]) {
-        const curKey =
-            keyHandle?.(keyLetter + keyY, curSheet[keyLetter + keyY]?.v) ||
-            curSheet[keyLetter + keyY]?.v?.trim?.();
-        if (curKey && !keys.includes(curKey)) {
-            keys.push(curKey);
+    Array.from({ length: keyY2 - keyY1 + 1 }).map((_, i) => {
+        const v = curSheet[keyX + (keyY1 + i)]?.v;
+        const key = handleKey?.(keyX + (keyY1 + i), v) || v?.trim();
+        if (key && !keys.includes(key)) {
+            keys.push(key);
         } else {
-            console.log(curKey, "KEY错误或者重复".red);
+            console.log(curSheet[keyX + (keyY1 + i)]?.v, "KEY错误或者重复".red);
             process.exit();
         }
-        ++keyY;
-    }
+    });
     const langs: string[] = [];
-    let langX = titleStart[0];
-    while (langX <= titleEnd[0]) {
-        const lang = titleHandle(
-            getCellName(langX) + titleStart[1],
-            curSheet[getCellName(langX) + titleStart[1]]?.v
-        );
+    titleX.map((x) => {
+        const v = curSheet[x + titleY]?.v;
+        const lang = handleTitle(x + titleY, v);
         if (lang && !langs.includes(lang)) {
             langs.push(lang);
-            ++langX;
         } else {
-            console.log("从标题栏提取语言错误或者语言重复".red, lang);
+            console.log(v, lang, "语言错误或重复".red);
             process.exit();
         }
-    }
+    });
     const locale: Record<string, Record<string, string>> = {};
-    for (let i = leftTop[0]; i <= rightBottom[0]; i++) {
-        const lang = langs[i - leftTop[0]];
+    for (let i = 0; i < titleX.length; i++) {
+        const lang = langs[i];
         if (!locale.hasOwnProperty(lang)) {
             locale[lang] = {};
-            for (let j = leftTop[1]; j <= rightBottom[1]; j++) {
-                const content = curSheet[getCellName(i) + j]?.v;
-                if (content == undefined) {
-                    console.log(`${getCellName(i) + j}没内容`.red);
+            for (let j = keyY1; j <= keyY2; j++) {
+                const v = curSheet[titleX[i] + j]?.v;
+                const hv =
+                    handleContent?.(
+                        titleX[i] + j,
+                        curSheet[titleX[i] + j]?.v
+                    ) || curSheet[titleX[i] + j]?.v?.trim();
+                if (!hv) {
+                    console.log(`${titleX[i] + j}没内容`.red);
                 }
-                locale[lang][keys[j - leftTop[1]]] =
-                    contentHandle?.(getCellName(i) + j, content) ||
-                    content?.trim();
+                locale[lang][keys[j - keyY1]] = hv;
             }
         }
     }
     try {
         fs.readdirSync(path.resolve(pwd, outputDir));
+        fs.rmdirSync(path.resolve(pwd, outputDir), {
+            recursive: true,
+        });
+        fs.mkdirSync(path.resolve(pwd, outputDir));
     } catch (e) {
         fs.mkdirSync(path.resolve(pwd, outputDir));
     }
@@ -154,31 +107,27 @@ function fn({
         fs.writeFileSync(
             path.resolve(pwd, outputDir, filename + extension),
             extension === ".json"
-                ? JSON.stringify(data, null, "\t")
-                : "export default " + JSON.stringify(data, null, "\t")
+                ? JSON.stringify(data, null, "    ")
+                : "export default " + JSON.stringify(data, null, "    ")
         )
     );
     console.log("输出结果：".green, path.resolve(pwd, outputDir).bgBlue);
     process.exit();
 }
-fn({
+pickSheet({
     inputPath: "excel/Clap house 文本表.xlsx",
     outputDir: "locale",
     extension: ".ts",
     sheetIndex: 7,
     sheetName: "PDD活动宝箱文本",
-    TITLE: {
-        start: [5, 4],
-        end: [8, 4],
-        handle: (_, content) => {
-            if (content?.split("/")[1]) return content?.split("/")[1];
-            console.log(content, "标题不合规范".red);
-            process.exit();
-        },
-    },
-    KEY: { start: [1, 5], end: [1, 14] },
-    SCOPE: {
-        leftTop: [5, 5],
-        rightBottom: [8, 14],
+    keyX: "A",
+    keyY1: 5,
+    keyY2: 14,
+    titleX: ["E", "F", "G", "H"],
+    titleY: 4,
+    handleTitle: (_, content) => {
+        if (content?.split("/")[1]) return content?.split("/")[1];
+        console.log(content, "标题不合规范".red);
+        process.exit();
     },
 });
