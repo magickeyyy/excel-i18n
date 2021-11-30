@@ -1,0 +1,54 @@
+{
+    "zh-CN": {
+        "TREASURE_CHEST": "变量",
+        "CHEST_OPEN": "取错了",
+        "SPECIAL_REWARD1": "中文翻译/zh-CN",
+        "SPECIAL_REWARD": "我们将向您发送限时宝箱！",
+        "SPECIAL_CHEST": "打开宝箱",
+        "KGHH": "特殊奖励",
+        "REWARD_YOUR": "确定",
+        "REWARD_SHARE_DESC_1": "特殊宝箱",
+        "sdsds": "{用户名}帮你助力了{金额}",
+        "RECORD_HELP": "你的奖励",
+        "undefined": "助力榜"
+    },
+    "en-US": {
+        "TREASURE_CHEST": "XXX【变量】XXX",
+        "CHEST_OPEN": "取错了",
+        "SPECIAL_REWARD1": "英文/en-US",
+        "SPECIAL_REWARD": "We're sending you a limited time treasure chest!",
+        "SPECIAL_CHEST": "OPEN THE CHEST",
+        "KGHH": "SPECIAL REWARD",
+        "REWARD_YOUR": "CONFIRM",
+        "REWARD_SHARE_DESC_1": "Special Chest",
+        "sdsds": "{nickname} helped you +${cash}",
+        "RECORD_HELP": "YOUR REWARD",
+        "undefined": "HELP RECORD"
+    },
+    "id-ID": {
+        "TREASURE_CHEST": "取错了",
+        "CHEST_OPEN": "取错了",
+        "SPECIAL_REWARD1": "印尼语/id-ID",
+        "SPECIAL_REWARD": "Kami mengirimi Anda peti harta karun yang waktunya terbatas!",
+        "SPECIAL_CHEST": "取错了",
+        "KGHH": "SPECIAL REWARD",
+        "REWARD_YOUR": "Konfirmasi",
+        "REWARD_SHARE_DESC_1": "Harta karun spesial",
+        "sdsds": "{nickname} membantumu mendapatkan +${cash}",
+        "RECORD_HELP": "Reward kamu",
+        "undefined": "Riwayat bantuan"
+    },
+    "tl-PH": {
+        "TREASURE_CHEST": "取错了",
+        "CHEST_OPEN": "取错了",
+        "SPECIAL_REWARD1": "菲语/tl-PH",
+        "SPECIAL_REWARD": "Magpapadala kami ng isang limitadong treasure chest",
+        "SPECIAL_CHEST": "BUKSAN ANG KABAN",
+        "KGHH": "ESPESYAL NA REWARD",
+        "REWARD_YOUR": "KUMPIRMAHIN",
+        "REWARD_SHARE_DESC_1": "Espesyal na Kaban",
+        "sdsds": "Tumulong si {nickname} na kumita ka ng +${cash}",
+        "RECORD_HELP": "ANG PREMYO MO",
+        "undefined": "TALAAN NG TULONG"
+    }
+}
