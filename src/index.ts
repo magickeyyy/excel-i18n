@@ -1,7 +1,7 @@
 import "colors";
 import path from "path";
 import fs from "fs";
-import { readFile } from "xlsx";
+import XLSX from "xlsx/";
 
 const pwd = process.cwd();
 /*
@@ -9,7 +9,7 @@ const pwd = process.cwd();
 坐标位置都是从1开始，[列数,行数]
 多语言存放区域（SCOPE），起点列数应该和标题栏起点列数相等，终点列数应该和标题栏终点列数相等；起点行数应该和KEY起点行数相等，终点行数应该和KEY列终点行数相等
 */
-function pickSheet({
+export function pickSheet({
     inputPath,
     outputDir,
     extension,
@@ -38,7 +38,7 @@ function pickSheet({
     handleTitle: (name: string, content?: string) => string | void;
     handleContent?: (name: string, content?: string) => string | void;
 }) {
-    const workbook = readFile(path.resolve(pwd, inputPath));
+    const workbook = XLSX.readFile(path.resolve(pwd, inputPath));
     const targetSheetName = sheetName || workbook.SheetNames[sheetIndex];
     const curSheet = workbook.Sheets[targetSheetName];
     if (
@@ -96,10 +96,6 @@ function pickSheet({
     }
     try {
         fs.readdirSync(path.resolve(pwd, outputDir));
-        fs.rmdirSync(path.resolve(pwd, outputDir), {
-            recursive: true,
-        });
-        fs.mkdirSync(path.resolve(pwd, outputDir));
     } catch (e) {
         fs.mkdirSync(path.resolve(pwd, outputDir));
     }
@@ -114,20 +110,3 @@ function pickSheet({
     console.log("输出结果：".green, path.resolve(pwd, outputDir).bgBlue);
     process.exit();
 }
-pickSheet({
-    inputPath: "excel/Clap house 文本表.xlsx",
-    outputDir: "locale",
-    extension: ".ts",
-    sheetIndex: 7,
-    sheetName: "PDD活动宝箱文本",
-    keyX: "A",
-    keyY1: 5,
-    keyY2: 14,
-    titleX: ["E", "F", "G", "H"],
-    titleY: 4,
-    handleTitle: (_, content) => {
-        if (content?.split("/")[1]) return content?.split("/")[1];
-        console.log(content, "标题不合规范".red);
-        process.exit();
-    },
-});
