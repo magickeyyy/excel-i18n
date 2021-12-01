@@ -1,17 +1,25 @@
 {
-    "name": "excel2json",
+    "name": "excel-i18n",
     "version": "1.0.0",
-    "description": "",
+    "description": "从按照预期格式的EXCEL文件中某一页提取多语言文本，生成json、ts、js文件",
     "main": "src/index.ts",
+    "repository": "https://github.com/magickeyyy/excel-i18n.git",
     "scripts": {
         "start": "ts-node ./src/index.ts",
+        "test": "node test",
         "prettier": "prettier --write --ignore-unknown",
         "prepare": "husky install"
     },
     "lint-staged": {
         "**/*": "prettier --write --ignore-unknown"
     },
-    "keywords": [],
+    "keywords": [
+        "excel",
+        "i18n",
+        "xlsx",
+        "csv",
+        "sheetjs"
+    ],
     "author": "magickeyyy",
     "license": "ISC",
     "engines": {

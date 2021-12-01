@@ -5,7 +5,7 @@ import XLSX from "xlsx/";
 
 const pwd = process.cwd();
 /*
-目前发现wps开过的文档会增加默认一个隐藏页：WpsReserved_CellImgList,所以取sheet还是以sheetName名为准
+可能会有隐藏页,所以取sheet还是以sheetName名为准
 坐标位置都是从1开始，[列数,行数]
 多语言存放区域（SCOPE），起点列数应该和标题栏起点列数相等，终点列数应该和标题栏终点列数相等；起点行数应该和KEY起点行数相等，终点行数应该和KEY列终点行数相等
 */

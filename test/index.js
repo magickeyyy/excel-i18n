@@ -1,15 +1,14 @@
-const pickSheet = require("../dist/index").pickSheet;
+const pickSheet = require("./excel-i18n").pickSheet;
 
 pickSheet({
-    inputPath: "test/excel/Clap house 文本表.xlsx",
+    inputPath: "test/i18n.xlsx",
     outputDir: "test/locale",
     extension: ".ts",
-    sheetIndex: 7,
-    sheetName: "PDD活动宝箱文本",
+    sheetName: "宝箱",
     keyX: "A",
     keyY1: 5,
     keyY2: 14,
-    titleX: ["E", "F", "G", "H"],
+    titleX: ["D", "E"],
     titleY: 4,
     handleTitle: (_, content) => {
         if (content?.split("/")[1]) return content?.split("/")[1];
