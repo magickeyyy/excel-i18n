@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "从按照预期格式的EXCEL文件中某一页提取多语言文本，生成json、ts、js文件",
     "main": "src/index.ts",
-    "repository": "https://github.com/magickeyyy/excel-i18n.git",
+    "repository": "https://gitee.com/magickeyyy/excel2json.git",
     "scripts": {
         "start": "ts-node ./src/index.ts",
         "test": "node test",
