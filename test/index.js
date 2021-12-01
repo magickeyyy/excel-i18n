@@ -15,4 +15,16 @@ pickSheet({
         console.log(content, "标题不合规范");
         process.exit();
     },
+    handleContent(_, content) {
+        if (
+            _ === "D10" &&
+            (!content ||
+                !content.includes("{nickname}") ||
+                !content.includes("{cash}"))
+        ) {
+            console.log(content, "占位符错误");
+            process.exit();
+        }
+        return content;
+    },
 });
