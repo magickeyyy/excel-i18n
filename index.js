@@ -12053,7 +12053,7 @@ Usage:
                                         (s.strategy === Z_FILTERED ||
                                             (s.match_length === MIN_MATCH &&
                                                 s.strstart - s.match_start >
-                                                    4096) /*TOO_FAR*/)
+                                                    4096)) /*TOO_FAR*/
                                     ) {
                                         /* If prev_match is also MIN_MATCH, match_start is garbage
                                          * but we will ignore the current match anyway.
@@ -30754,7 +30754,7 @@ var xlsx = createCommonjsModule(function (module, exports) {
                 z.r = utf8read(x);
                 if (html) z.h = escapehtml(z.t);
             } else if (/*y = */ x.match(sirregex)) {
-            /* 18.4.4 r CT_RElt (Rich Text Run) */
+                /* 18.4.4 r CT_RElt (Rich Text Run) */
                 z.r = utf8read(x);
                 z.t = unescapexml(
                     utf8read(
@@ -39110,8 +39110,7 @@ var xlsx = createCommonjsModule(function (module, exports) {
         function write_WSVIEWS2(ba, ws, Workbook) {
             write_record(ba, "BrtBeginWsViews");
             {
-                /* 1*WSVIEW2 */ /* [ACUID] */
-                write_record(
+                /* 1*WSVIEW2 */ /* [ACUID] */ write_record(
                     ba,
                     "BrtBeginWsView",
                     write_BrtBeginWsView(ws, Workbook)

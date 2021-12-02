@@ -8,11 +8,11 @@
         "start": "ts-node ./src/index.ts",
         "build": " node rollup",
         "test": "node test",
-        "prettier": "prettier --write --ignore-unknown",
+        "prettier": "prettier --write .",
         "prepare": "husky install"
     },
     "lint-staged": {
-        "**/*": "prettier --write --ignore-unknown"
+        "**/*": "prettier --write ."
     },
     "keywords": [
         "excel",
