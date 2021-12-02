@@ -21,7 +21,7 @@ async function build() {
         ],
     });
     await bundle.write({
-        file: "dist/index.js",
+        file: "index.js",
         format: "cjs",
         globals: {
             fs: "fs",

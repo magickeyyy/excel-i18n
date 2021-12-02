@@ -2,10 +2,11 @@
     "name": "excel-i18n",
     "version": "1.0.0",
     "description": "从按照预期格式的EXCEL文件中某一页提取多语言文本，生成json、ts、js文件",
-    "main": "src/index.ts",
+    "main": "index.js",
     "repository": "https://gitee.com/magickeyyy/excel2json.git",
     "scripts": {
         "start": "ts-node ./src/index.ts",
+        "build": " node rollup",
         "test": "node test",
         "prettier": "prettier --write --ignore-unknown",
         "prepare": "husky install"
@@ -22,9 +23,6 @@
     ],
     "author": "magickeyyy",
     "license": "ISC",
-    "engines": {
-        "node": ">=12.0.0"
-    },
     "dependencies": {
         "colors": "^1.4.0",
         "xlsx": "^0.17.4"
