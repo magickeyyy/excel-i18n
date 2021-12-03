@@ -7,12 +7,12 @@
     "scripts": {
         "start": "ts-node ./src/index.ts",
         "build": " node rollup",
-        "test": "node test",
-        "prettier": "prettier --write .",
+        "test": "mocha",
+        "prettier": "prettier --write --ignore-unknown",
         "prepare": "husky install"
     },
     "lint-staged": {
-        "**/*": "prettier --write ."
+        "**/*": "prettier --write --ignore-unknown"
     },
     "keywords": [
         "excel",

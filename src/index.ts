@@ -23,6 +23,7 @@ export function pickSheet({
     handleTitle,
     handleContent,
     handleKey,
+    callback,
 }: {
     inputPath: string; // 文件在process.pwd()下的路径
     outputDir: string; // 输出文件夹
@@ -37,6 +38,7 @@ export function pickSheet({
     handleKey?: (name: string, content?: string) => string | void;
     handleTitle: (name: string, content?: string) => string | void;
     handleContent?: (name: string, content?: string) => string | void;
+    callback?: () => void;
 }) {
     const workbook = XLSX.readFile(path.resolve(pwd, inputPath));
     const targetSheetName = sheetName || workbook.SheetNames[sheetIndex];
@@ -108,5 +110,5 @@ export function pickSheet({
         )
     );
     console.log("输出结果：".green, path.resolve(pwd, outputDir).bgBlue);
-    process.exit();
+    callback?.();
 }

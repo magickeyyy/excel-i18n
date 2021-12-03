@@ -13,6 +13,7 @@ export declare function pickSheet({
     handleTitle,
     handleContent,
     handleKey,
+    callback,
 }: {
     inputPath: string;
     outputDir: string;
@@ -27,4 +28,5 @@ export declare function pickSheet({
     handleKey?: (name: string, content?: string) => string | void;
     handleTitle: (name: string, content?: string) => string | void;
     handleContent?: (name: string, content?: string) => string | void;
+    callback?: () => void;
 }): void;
